@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOOTH スキリスト検索・ソート — ブックマークレット</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    background: #F7F8FA;
+    color: #252F3D;
+    line-height: 1.7;
+    padding: 0 16px;
+  }
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 40px 0 80px;
+  }
+  h1 {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    color: #5E6B7A;
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-size: 17px;
+    margin-top: 32px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #42B5BD;
+  }
+  p, li { font-size: 15px; }
+  ol { padding-left: 1.5em; }
+  li { margin-bottom: 8px; }
+  .bookmarklet-link {
+    display: inline-block;
+    margin: 16px 0;
+    padding: 14px 28px;
+    background: #42B5BD;
+    color: #fff !important;
+    font-size: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 8px;
+    cursor: grab;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .bookmarklet-link:hover { background: #3AA3AB; }
+  .bookmarklet-link:active { cursor: grabbing; }
+  .note {
+    background: #fff;
+    border: 1px solid #D5D9DE;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .note strong { color: #FF5C67; }
+  code {
+    background: #E8ECF0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  .manual-code {
+    display: block;
+    background: #1E1E2E;
+    color: #CDD6F4;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    word-break: break-all;
+    white-space: pre-wrap;
+    margin: 12px 0;
+    position: relative;
+    line-height: 1.5;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 12px;
+    background: #42B5BD;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .copy-btn:hover { background: #3AA3AB; }
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .features span {
+    background: #fff;
+    border: 1px solid #D5D9DE;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>BOOTH スキリスト検索・ソート</h1>
+  <p class="subtitle">BOOTHの「スキした商品」ページに検索・絞り込み・ソート機能を追加するブックマークレット</p>
+
+  <div class="features">
+    <span>キーワード検索</span>
+    <span>価格ソート</span>
+    <span>カテゴリ絞り込み</span>
+    <span>タグ検索</span>
+    <span>表示列数変更</span>
+    <span>表示件数変更</span>
+  </div>
+
+  <h2>PC（Chrome / Firefox / Edge）</h2>
+  <p>下のボタンをブックマークバーにドラッグ＆ドロップしてください：</p>
+
+  <a class="bookmarklet-link"
+     href="javascript:void(function(){if(document.getElementById('bws-bookmarklet-script')){location.reload();return}var s=document.createElement('script');s.id='bws-bookmarklet-script';s.src='https://nfya-lab.github.io/booth-wishlist-sercher/bookmarklet.js?v='+Date.now();document.head.appendChild(s)}())">
+    BOOTH スキリスト検索
+  </a>
+
+  <p>BOOTHの<a href="https://accounts.booth.pm/wish_lists" target="_blank">スキした商品ページ</a>を開いた状態でブックマークをクリックすれば起動します。</p>
+
+  <h2>スマホ（iPhone Safari / Android Chrome）</h2>
+  <ol>
+    <li>まずこのページを<strong>ブックマーク</strong>に追加します（何でもOK）</li>
+    <li>ブックマークを<strong>編集</strong>して、URLを以下のコードに<strong>全て書き換え</strong>ます：</li>
+  </ol>
+
+  <div class="manual-code" id="bookmarklet-code"><button class="copy-btn" onclick="copyCode()">コピー</button>javascript:void(function(){if(document.getElementById('bws-bookmarklet-script')){location.reload();return}var s=document.createElement('script');s.id='bws-bookmarklet-script';s.src='https://nfya-lab.github.io/booth-wishlist-sercher/bookmarklet.js?v='+Date.now();document.head.appendChild(s)}())</div>
+
+  <ol start="3">
+    <li>BOOTHの<a href="https://accounts.booth.pm/wish_lists" target="_blank">スキした商品ページ</a>をSafari/Chromeで開きます</li>
+    <li>アドレスバーをタップして、先ほど編集したブックマークを選択すれば起動！</li>
+  </ol>
+
+  <div class="note">
+    <strong>注意：</strong> BOOTHにログインした状態で実行してください。ブックマークレットはBOOTHの<code>accounts.booth.pm/wish_lists</code>ページでのみ動作します。
+  </div>
+
+  <h2>うまく動かない場合</h2>
+  <ul style="padding-left:1.5em">
+    <li>BOOTHにログインしているか確認してください</li>
+    <li>URLが <code>accounts.booth.pm/wish_lists</code> であることを確認してください</li>
+    <li>ブラウザのポップアップブロッカーが干渉する場合は一時的に無効にしてみてください</li>
+    <li>2回目以降は再読み込みされます。少し待ってからもう一度お試しください</li>
+  </ul>
+
+  <h2>PC拡張機能版</h2>
+  <p>Chrome拡張機能版は自動で起動し、より安定して動作します。<br>
+  <a href="https://github.com/nfya-lab/booth-wishlist-sercher" target="_blank">GitHub リポジトリ</a>からダウンロードできます。</p>
+</div>
+
+<script>
+function copyCode() {
+  var el = document.getElementById("bookmarklet-code");
+  var text = el.textContent.replace("コピー", "").trim();
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = el.querySelector(".copy-btn");
+    btn.textContent = "コピー済み!";
+    setTimeout(function() { btn.textContent = "コピー"; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
