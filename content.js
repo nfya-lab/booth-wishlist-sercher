@@ -2,9 +2,13 @@
   "use strict";
 
   // ===== Config =====
-  const FETCH_CONCURRENCY = 5;
+  // Deliberately conservative: this tool must never look like a crawler to
+  // BOOTH. Loosening these values increases the risk of rate limiting or
+  // account flags — do not raise them.
+  const FETCH_CONCURRENCY = 3;
+  const BATCH_DELAY_MS = 400; // pause between every request batch
   const DEBOUNCE_MS = 300;
-  const RATE_LIMIT_EVERY = 100; // items
+  const RATE_LIMIT_EVERY = 50; // items — then take a longer randomized pause
   const RATE_LIMIT_MIN_MS = 1000;
   const RATE_LIMIT_MAX_MS = 3000;
 
@@ -26,7 +30,7 @@
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
   }
 
-  const BULK_DELAY_MS = 250;
+  const BULK_DELAY_MS = 500;
   function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
   }
@@ -885,6 +889,7 @@
               vcItemsLoaded += r.value.length;
             }
           });
+          await sleep(BATCH_DELAY_MS);
         }
       }
 
@@ -1085,6 +1090,8 @@
       // Stream new items into the current view (keeps active search/filter applied)
       populateFilterOptions();
       applyFilterAndSort();
+
+      await sleep(BATCH_DELAY_MS);
     }
 
     finishLoading();
@@ -1353,6 +1360,8 @@
       const pct = Math.round((loaded / total) * 100);
       if (progressBar) progressBar.style.width = pct + "%";
       if (progressText) progressText.textContent = "詳細読み込み中... " + loaded + "/" + total;
+
+      await sleep(BATCH_DELAY_MS);
     }
 
     if (progressContainer) progressContainer.style.display = "none";
@@ -1419,6 +1428,7 @@
           count += r.value.length;
         }
       }
+      await sleep(BATCH_DELAY_MS);
     }
     return signal.aborted ? null : items;
   }
