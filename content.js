@@ -1,18 +1,5 @@
-// GENERATED FILE — do not edit. Built from content.js by scripts/build-bookmarklet.js
-// Capture script src before IIFE (document.currentScript is null inside IIFE)
-var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
 (() => {
   "use strict";
-
-  // ===== Inject CSS (bookmarklet mode) =====
-  if (!document.getElementById("bws-injected-style") && _bwsScriptSrc) {
-    const baseUrl = _bwsScriptSrc.replace(/[^/]+(\?.*)?$/, "");
-    const link = document.createElement("link");
-    link.id = "bws-injected-style";
-    link.rel = "stylesheet";
-    link.href = baseUrl + "bookmarklet.css";
-    document.head.appendChild(link);
-  }
 
   // ===== Config =====
   const FETCH_CONCURRENCY = 5;
@@ -141,18 +128,33 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
   }
 
   // ==== BWS:STORAGE-BEGIN ====
-  // Storage backend — localStorage (bookmarklet build)
+  // Storage backend — chrome.storage.local in the extension.
+  // The bookmarklet build (scripts/build-bookmarklet.js) swaps this block
+  // for a localStorage implementation. Keep the two function signatures.
   function storageWrite(obj) {
     try {
-      localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(obj));
-    } catch (_) { /* quota exceeded — ignore */ }
+      chrome.storage.local.set({ [CACHE_STORAGE_KEY]: obj });
+    } catch (_) { /* extension context invalidated — ignore */ }
   }
 
   async function storageRead() {
+    let obj = null;
     try {
-      const raw = localStorage.getItem(CACHE_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (_) { return null; }
+      const stored = await chrome.storage.local.get(CACHE_STORAGE_KEY);
+      obj = stored[CACHE_STORAGE_KEY] || null;
+    } catch (_) { /* storage unavailable — ignore */ }
+
+    // Migrate cache from older versions that used localStorage
+    if (!obj) {
+      try {
+        const raw = localStorage.getItem(CACHE_STORAGE_KEY);
+        if (raw) {
+          obj = JSON.parse(raw);
+          localStorage.removeItem(CACHE_STORAGE_KEY);
+        }
+      } catch (_) { /* corrupt data — ignore */ }
+    }
+    return obj;
   }
   // ==== BWS:STORAGE-END ====
 
