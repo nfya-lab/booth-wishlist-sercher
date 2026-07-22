@@ -2097,6 +2097,34 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
     }
   });
 
+  // Position the popup near its anchor, clamped to the viewport.
+  // Mounted on document.body — inside the card it would be clipped by the
+  // card's / grid's overflow:hidden (the "heart popup cut off" bug).
+  // On mobile the CSS bottom-sheet layout takes over instead.
+  function positionWishPopup(popup, anchorEl) {
+    if (isMobile()) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const margin = 8;
+    const pw = popup.offsetWidth;
+    const ph = popup.offsetHeight;
+
+    // Align the popup's right edge with the button, clamped into the viewport
+    let left = rect.right - pw;
+    left = Math.max(margin, Math.min(left, window.innerWidth - pw - margin));
+
+    // Prefer below the button; flip above if it would overflow the bottom
+    let top = rect.bottom + 4;
+    if (top + ph > window.innerHeight - margin) {
+      top = rect.top - ph - 4;
+      if (top < margin) {
+        top = Math.max(margin, window.innerHeight - ph - margin);
+      }
+    }
+
+    popup.style.top = top + "px";
+    popup.style.left = left + "px";
+  }
+
   function openWishListPopup(item, anchorEl) {
     // Close any existing popup
     document.querySelectorAll(".bws-wish-popup").forEach((el) => el.remove());
@@ -2105,13 +2133,23 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
     popup.className = "bws-wish-popup";
     popup.innerHTML = '<div class="bws-wish-popup-loading">読み込み中...</div>';
 
-    // Position relative to anchor
-    const card = anchorEl.closest(".bws-item-card");
-    card.style.position = "relative";
-    card.appendChild(popup);
+    document.body.appendChild(popup);
+    positionWishPopup(popup, anchorEl);
 
     // Prevent closing immediately
     popup.addEventListener("click", (e) => e.stopPropagation());
+
+    // PC: the popup is position:fixed, so close it when the page scrolls to
+    // avoid it visually detaching from its card (scrolling INSIDE the popup
+    // list is fine). Self-cleans once the popup is gone.
+    if (!isMobile()) {
+      const onScroll = (e) => {
+        if (popup.contains(e.target)) return;
+        popup.remove();
+        window.removeEventListener("scroll", onScroll, true);
+      };
+      window.addEventListener("scroll", onScroll, true);
+    }
 
     // Fetch wish list data
     fetchWishListItemsForItem(item.id).then((lists) => {
@@ -2190,9 +2228,12 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
 
       actions.append(saveBtn, removeBtn);
       popup.appendChild(actions);
+      // Content height changed — re-clamp into the viewport
+      positionWishPopup(popup, anchorEl);
     }).catch((err) => {
       console.error("BWS: Failed to fetch wish list items", err);
       popup.innerHTML = '<div class="bws-wish-popup-loading">読み込みに失敗しました</div>';
+      positionWishPopup(popup, anchorEl);
     });
   }
 

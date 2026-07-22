@@ -528,15 +528,16 @@
 
 /* ===== Wish list popup ===== */
 .bws-wish-popup {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  z-index: 100;
+  /* Mounted on document.body and positioned by JS (top/left) — anchoring it
+     inside the card gets clipped by the card's overflow: hidden */
+  position: fixed;
+  z-index: 10000;
   background: #fff;
   border: 1px solid #D5D9DE;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   min-width: 200px;
+  max-width: calc(100vw - 16px);
   padding: 12px;
   font-size: 14px;
 }
