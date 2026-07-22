@@ -1,11 +1,14 @@
 {
   "manifest_version": 3,
   "name": "BOOTH スキリスト検索・ソート",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "description": "BOOTHの「スキした商品」ページに検索・ソート機能を追加します",
   "content_scripts": [
     {
-      "matches": ["https://accounts.booth.pm/wish_lists*"],
+      "matches": [
+        "https://accounts.booth.pm/wish_lists*",
+        "https://booth.pm/wish_list_names/*"
+      ],
       "js": ["content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"

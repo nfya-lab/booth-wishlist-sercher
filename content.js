@@ -10,6 +10,17 @@
 
   function isMobile() { return window.innerWidth < 744; }
 
+  // Shared wish list pages (someone else's public list) live on
+  // booth.pm/wish_list_names/{code}; our own lists are on
+  // accounts.booth.pm/wish_lists. Same item schema, different mount point
+  // and API host. No management features in shared mode.
+  const SHARED_MODE = window.location.hostname === "booth.pm";
+
+  function getMountPoint() {
+    return document.getElementById("js-mount-point-wish-list") ||
+      document.getElementById("js-mount-point-market-wish-list-names");
+  }
+
   function rateLimitDelay() {
     const ms = RATE_LIMIT_MIN_MS + Math.random() * (RATE_LIMIT_MAX_MS - RATE_LIMIT_MIN_MS);
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
@@ -96,13 +107,18 @@
 
   // ===== URL helpers =====
   function getWishListCode() {
-    const m = window.location.pathname.match(/\/wish_lists\/([^/?#]+)/);
+    const m = window.location.pathname.match(/\/wish_list(?:s|_names)\/([^/?#]+)/);
     return m ? m[1] : null;
   }
 
   // code is captured ONCE at the start of a load and passed through — reading
   // window.location per request would mix lists if the user navigates mid-load
   function getApiPageUrl(page, code) {
+    if (SHARED_MODE) {
+      // Public API used by the shared list page itself (CORS-allowed, no auth)
+      return "https://api.booth.pm/frontend/wish_list_names/" +
+        encodeURIComponent(code) + "/items.json?page=" + page;
+    }
     let url = "/wish_list_name_items.json?page=" + page;
     if (code) {
       url += "&wish_list_name_code=" + encodeURIComponent(code);
@@ -112,6 +128,7 @@
 
   // ===== Cache helpers =====
   function getCacheKey() {
+    if (SHARED_MODE) return "shared_" + getWishListCode();
     return getWishListCode() || "__all__";
   }
 
@@ -262,7 +279,7 @@
 
   // ===== Find DOM anchors =====
   function findDomAnchors() {
-    const mp = document.getElementById("js-mount-point-wish-list");
+    const mp = getMountPoint();
     if (!mp) return null;
 
     const wrapper = mp.firstElementChild?.firstElementChild;
@@ -323,7 +340,7 @@
       applyFilterAndSort();
       // Resume/share detail data. For a specific list this pulls tags from the
       // master ("all items") cache and resumes the master detail fetch if needed
-      if (getWishListCode()) {
+      if (!SHARED_MODE && getWishListCode()) {
         ensureMasterDetails();
       } else if (!detailFetchComplete && !masterLoading) {
         fetchItemDetails();
@@ -343,7 +360,7 @@
   function setupContentObserver() {
     if (contentObserver) contentObserver.disconnect();
 
-    const mp = document.getElementById("js-mount-point-wish-list");
+    const mp = getMountPoint();
     if (!mp) return;
 
     contentObserver = new MutationObserver(() => {
@@ -667,10 +684,10 @@
     // ===== Assemble container =====
     container.append(searchWrapper, controlsRow, filterPanel, progressContainer);
 
-    // Insert into page
-    const countRow = gridGap24.children[1];
-    if (countRow) {
-      countRow.after(container);
+    // Insert just above the item grid (works for both the own-account page
+    // and the shared list page, whose headers differ)
+    if (originalGrid) {
+      originalGrid.before(container);
     } else {
       gridGap24.prepend(container);
     }
@@ -1087,8 +1104,10 @@
   async function fetchLikes(itemIds, signal) {
     if (!itemIds.length) return {};
     const params = itemIds.map((id) => "item_ids[]=" + id).join("&");
-    const resp = await fetch("/wish_lists.json?" + params, {
-      credentials: "same-origin",
+    // Absolute URL: on booth.pm (shared mode) this is a CORS request that
+    // accounts.booth.pm explicitly allows with credentials
+    const resp = await fetch("https://accounts.booth.pm/wish_lists.json?" + params, {
+      credentials: "include",
       headers: { Accept: "application/json" },
       signal,
     });
@@ -1148,12 +1167,13 @@
     populateFilterOptions();
     applyFilterAndSort();
     saveToCache();
-    if (getWishListCode()) {
+    if (!SHARED_MODE && getWishListCode()) {
       // Specific list: fetch the FULL item set in the background and run the
       // detail fetch against it once — every list shares the result
       ensureMasterDetails();
     } else if (!masterLoading) {
-      // Current view IS the master set
+      // Current view IS the master set — or a shared list (someone else's
+      // list: no "all my items" concept there, fetch details directly)
       fetchItemDetails();
     }
     // (masterLoading: an in-flight master run already covers this view)
@@ -1818,7 +1838,7 @@
       }
     };
     findAndBind();
-    const mp = document.getElementById("js-mount-point-wish-list");
+    const mp = getMountPoint();
     if (mp) {
       if (manageBtnObserver) manageBtnObserver.disconnect();
       manageBtnObserver = new MutationObserver(() => findAndBind());
@@ -2083,7 +2103,7 @@
     const code = getWishListCode();
     if (!code) return "すべてのスキ";
     // Try to find from tab buttons
-    const mp = document.getElementById("js-mount-point-wish-list");
+    const mp = getMountPoint();
     if (mp) {
       const activeTab = mp.querySelector("button[class*='bg-primary']") ||
         mp.querySelector("button.charcoal-button[data-variant='Primary']");
@@ -2478,7 +2498,10 @@
 
   function onNavigate() {
     cancelPendingInit();
-    if (!window.location.pathname.startsWith("/wish_lists")) {
+    const onWishPage = SHARED_MODE
+      ? window.location.pathname.startsWith("/wish_list_names")
+      : window.location.pathname.startsWith("/wish_lists");
+    if (!onWishPage) {
       // Leaving wish lists entirely — stop the master background load too
       // (list-to-list switches keep it running on purpose)
       if (masterAbortController) {
@@ -2514,7 +2537,7 @@
   function waitForAnchorsAndInit() {
     cancelPendingInit();
 
-    const mp = document.getElementById("js-mount-point-wish-list");
+    const mp = getMountPoint();
     if (!mp) return;
 
     // If anchors are already there, init after a short delay
