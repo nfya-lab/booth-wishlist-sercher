@@ -19,7 +19,8 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
   // BOOTH. Loosening these values increases the risk of rate limiting or
   // account flags — do not raise them.
   const FETCH_CONCURRENCY = 3;
-  const BATCH_DELAY_MS = 400; // pause between every request batch
+  const BATCH_DELAY_MIN_MS = 250; // randomized pause between every request batch
+  const BATCH_DELAY_MAX_MS = 500;
   const DEBOUNCE_MS = 300;
   const RATE_LIMIT_EVERY = 50; // items — then take a longer randomized pause
   const RATE_LIMIT_MIN_MS = 1000;
@@ -46,6 +47,10 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
   const BULK_DELAY_MS = 500;
   function sleep(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
+  }
+
+  function batchDelay() {
+    return sleep(BATCH_DELAY_MIN_MS + Math.random() * (BATCH_DELAY_MAX_MS - BATCH_DELAY_MIN_MS));
   }
 
   function showBulkProgress(label, done, total) {
@@ -887,7 +892,7 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
               vcItemsLoaded += r.value.length;
             }
           });
-          await sleep(BATCH_DELAY_MS);
+          await batchDelay();
         }
       }
 
@@ -1089,7 +1094,7 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
       populateFilterOptions();
       applyFilterAndSort();
 
-      await sleep(BATCH_DELAY_MS);
+      await batchDelay();
     }
 
     finishLoading();
@@ -1359,7 +1364,7 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
       if (progressBar) progressBar.style.width = pct + "%";
       if (progressText) progressText.textContent = "詳細読み込み中... " + loaded + "/" + total;
 
-      await sleep(BATCH_DELAY_MS);
+      await batchDelay();
     }
 
     if (progressContainer) progressContainer.style.display = "none";
@@ -1426,7 +1431,7 @@ var _bwsScriptSrc = document.currentScript ? document.currentScript.src : "";
           count += r.value.length;
         }
       }
-      await sleep(BATCH_DELAY_MS);
+      await batchDelay();
     }
     return signal.aborted ? null : items;
   }

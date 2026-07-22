@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BOOTH スキリスト検索・ソート",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "BOOTHの「スキした商品」ページに検索・ソート機能を追加します",
   "content_scripts": [
     {
