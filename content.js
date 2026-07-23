@@ -1005,6 +1005,8 @@
       applyFilterAndSort();
       saveToCache();
     } catch (e) {
+      // Deliberate abort (list switch / re-init) — not a failure
+      if (e && e.name === "AbortError") return;
       // Network error — just keep using cache
       console.warn("BWS: Cache validation failed, using cache", e);
     }
